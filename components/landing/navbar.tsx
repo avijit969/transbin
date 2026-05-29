@@ -62,6 +62,12 @@ export function Navbar() {
           {/* Right CTA & Mobile Toggle */}
           <div className="flex items-center gap-4">
             <Link
+              href="/login"
+              className="hidden md:flex items-center justify-center rounded-full bg-white border border-gray-200 px-6 py-2.5 text-sm font-medium text-gray-700 hover:text-[#25D366] hover:border-[#25D366] transition-all hover:-translate-y-0.5"
+            >
+              Login
+            </Link>
+            <Link
               href="#contact"
               className="hidden md:flex items-center justify-center rounded-full bg-[#25D366] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-[#25D366]/30 hover:bg-[#1FAF57] hover:shadow-xl hover:shadow-[#25D366]/40 transition-all hover:-translate-y-0.5"
             >
