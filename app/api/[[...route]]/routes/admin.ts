@@ -82,10 +82,17 @@ export const adminRoute = new Hono()
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
 
+      const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+
       // Upload to Cloudinary using stream
       const uploadResult = await new Promise<any>((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(
-          { folder: 'trashbin_invoices', resource_type: 'auto' },
+          { 
+            folder: 'trashbin_invoices', 
+            resource_type: isPdf ? 'raw' : 'auto',
+            // Ensure the extension is preserved for raw files so browsers know it's a PDF
+            format: isPdf ? 'pdf' : undefined 
+          },
           (error, result) => {
             if (error) return reject(error);
             resolve(result);
@@ -95,7 +102,7 @@ export const adminRoute = new Hono()
       });
 
       const fileUrl = uploadResult.secure_url;
-      const fileType = uploadResult.resource_type === 'image' ? 'image' : 'pdf';
+      const fileType = isPdf ? 'pdf' : 'image';
       const invoiceId = uuidv4();
 
       db.insert(invoices).values({
@@ -111,4 +118,35 @@ export const adminRoute = new Hono()
       console.error('Upload Error:', error);
       return c.json({ error: 'Failed to upload invoice' }, 500);
     }
+  })
+
+  // Get all invoices
+  .get('/invoices/all', async (c) => {
+    // Join invoices with users to get user email/name
+    const allInvoices = db
+      .select({
+        id: invoices.id,
+        fileUrl: invoices.fileUrl,
+        fileType: invoices.fileType,
+        createdAt: invoices.createdAt,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        }
+      })
+      .from(invoices)
+      .innerJoin(users, eq(invoices.userId, users.id))
+      .orderBy(desc(invoices.createdAt))
+      .all();
+      
+    return c.json({ invoices: allInvoices });
+  })
+
+  // Get basic analytics
+  .get('/analytics', async (c) => {
+    const totalUsers = db.select({ id: users.id }).from(users).all().length;
+    const totalInvoices = db.select({ id: invoices.id }).from(invoices).all().length;
+    
+    return c.json({ totalUsers, totalInvoices });
   });

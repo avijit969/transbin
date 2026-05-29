@@ -60,5 +60,10 @@ export const authRoute = new Hono()
   })
   .get('/me', authMiddleware, (c) => {
     const user = c.get('user');
-    return c.json({ user });
+
+    const userData = db.select().from(users).where(eq(users.id, user.id)).get();
+    if (!userData) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+    return c.json({ userData });
   });
