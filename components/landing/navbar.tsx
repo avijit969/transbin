@@ -6,12 +6,12 @@ import { Menu, X, Leaf } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const links = [
-  { name: "Home", href: "#home" },
-  { name: "About", href: "#about" },
-  { name: "Services", href: "#services" },
-  { name: "Process", href: "#process" },
-  { name: "Blog", href: "#blog" },
-  { name: "Contact", href: "#contact" },
+  { name: "Home", href: "/" },
+  { name: "About", href: "/about" },
+  { name: "Services", href: "/services" },
+  { name: "Process", href: "/process" },
+  { name: "Blog", href: "/blog" },
+  { name: "Contact", href: "/#contact" },
 ];
 
 export function Navbar() {
@@ -37,7 +37,7 @@ export function Navbar() {
           isScrolled ? "glass-panel" : "bg-transparent"
         }`}>
           {/* Logo */}
-          <Link href="#home" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2 group">
             <div className="bg-[#25D366] p-2 rounded-full text-white group-hover:scale-110 transition-transform">
               <Leaf size={20} />
             </div>
@@ -68,7 +68,7 @@ export function Navbar() {
               Login
             </Link>
             <Link
-              href="#contact"
+              href="/#contact"
               className="hidden md:flex items-center justify-center rounded-full bg-[#25D366] px-6 py-2.5 text-sm font-medium text-white shadow-lg shadow-[#25D366]/30 hover:bg-[#1FAF57] hover:shadow-xl hover:shadow-[#25D366]/40 transition-all hover:-translate-y-0.5"
             >
               Get Waste Pickup
@@ -105,7 +105,14 @@ export function Navbar() {
                 </Link>
               ))}
               <Link
-                href="#contact"
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-lg font-medium text-gray-800 hover:text-[#25D366] border-b border-gray-100 pb-2"
+              >
+                Login
+              </Link>
+              <Link
+                href="/#contact"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="mt-4 flex items-center justify-center rounded-full bg-[#25D366] px-6 py-3 text-base font-medium text-white shadow-lg hover:bg-[#1FAF57] transition-all"
               >

@@ -3,7 +3,84 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Leaf, LogOut, LayoutDashboard, Users, FileText, UserCircle, Menu, X } from "lucide-react";
+import { Leaf, LogOut, LayoutDashboard, Users, FileText, UserCircle, Menu } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+// Sidebar content extracted for reuse in both desktop and mobile Sheet
+const SidebarContent = ({ user, pathname, handleLogout, setIsMobileOpen }: any) => {
+  return (
+    <div className="flex flex-col h-full bg-white">
+      <div className="p-6">
+        <Link href="/" className="flex items-center gap-2 group">
+          <div className="bg-[#25D366] p-2 rounded-full text-white">
+            <Leaf size={20} />
+          </div>
+          <span className="font-bold text-xl text-gray-900 tracking-tight">
+            TrashBin
+          </span>
+        </Link>
+      </div>
+
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        {user?.role === 'superadmin' ? (
+          <>
+            <Link href="/dashboard/superadmin" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <LayoutDashboard size={20} /> Overview
+            </Link>
+            <Link href="/dashboard/superadmin/users" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin/users' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <Users size={20} /> Manage Users
+            </Link>
+            <Link href="/dashboard/superadmin/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <UserCircle size={20} /> Profile
+            </Link>
+          </>
+        ) : user?.role === 'admin' ? (
+          <>
+            <Link href="/dashboard/admin" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <LayoutDashboard size={20} /> Overview
+            </Link>
+            <Link href="/dashboard/admin/users" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin/users' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <Users size={20} /> Manage Users
+            </Link>
+            <Link href="/dashboard/admin/invoices" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin/invoices' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FileText size={20} /> Invoices
+            </Link>
+            <Link href="/dashboard/admin/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <UserCircle size={20} /> Profile
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link href="/dashboard/user" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/user' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <FileText size={20} /> My Invoices
+            </Link>
+            <Link href="/dashboard/user/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/user/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <UserCircle size={20} /> Profile
+            </Link>
+          </>
+        )}
+      </nav>
+
+      <div className="p-4 border-t border-gray-100 mt-auto">
+        <div className="flex items-center gap-3 px-4 py-3 mb-2">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#86EFAC] to-[#25D366] flex items-center justify-center text-white font-bold">
+            {user?.name?.charAt(0).toUpperCase()}
+          </div>
+          <div className="overflow-hidden">
+            <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
+            <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          </div>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <LogOut size={20} /> Logout
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
@@ -62,81 +139,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             TrashBin
           </span>
         </Link>
-        <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="p-2 text-gray-600 bg-gray-50 rounded-lg">
-          {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <Sheet open={isMobileOpen} onOpenChange={setIsMobileOpen}>
+          <SheetTrigger asChild>
+            <button className="p-2 text-gray-600 bg-gray-50 rounded-lg">
+              <Menu size={24} />
+            </button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-64 border-none">
+            <SidebarContent user={user} pathname={pathname} handleLogout={handleLogout} setIsMobileOpen={setIsMobileOpen} />
+          </SheetContent>
+        </Sheet>
       </div>
 
-      {/* Sidebar */}
-      <aside className={`w-64 bg-white border-r border-gray-100 flex-col md:flex fixed md:sticky top-0 h-screen z-10 transition-transform duration-300 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className="p-6 hidden md:block">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="bg-[#25D366] p-2 rounded-full text-white">
-              <Leaf size={20} />
-            </div>
-            <span className="font-bold text-xl text-gray-900 tracking-tight">
-              TrashBin
-            </span>
-          </Link>
-        </div>
-
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          {user?.role === 'superadmin' ? (
-            <>
-              <Link href="/dashboard/superadmin" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <LayoutDashboard size={20} /> Overview
-              </Link>
-              <Link href="/dashboard/superadmin/users" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin/users' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <Users size={20} /> Manage Users
-              </Link>
-              <Link href="/dashboard/superadmin/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <UserCircle size={20} /> Profile
-              </Link>
-            </>
-          ) : user?.role === 'admin' ? (
-            <>
-              <Link href="/dashboard/admin" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <LayoutDashboard size={20} /> Overview
-              </Link>
-              <Link href="/dashboard/admin/users" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin/users' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <Users size={20} /> Manage Users
-              </Link>
-              <Link href="/dashboard/admin/invoices" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin/invoices' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <FileText size={20} /> Invoices
-              </Link>
-              <Link href="/dashboard/admin/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <UserCircle size={20} /> Profile
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/dashboard/user" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/user' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <FileText size={20} /> My Invoices
-              </Link>
-              <Link href="/dashboard/user/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/user/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
-                <UserCircle size={20} /> Profile
-              </Link>
-            </>
-          )}
-        </nav>
-
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#86EFAC] to-[#25D366] flex items-center justify-center text-white font-bold">
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-bold text-gray-900 truncate">{user?.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-colors"
-          >
-            <LogOut size={20} /> Logout
-          </button>
-        </div>
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 border-r border-gray-100 flex-col sticky top-0 h-screen z-10 bg-white">
+        <SidebarContent user={user} pathname={pathname} handleLogout={handleLogout} setIsMobileOpen={() => {}} />
       </aside>
 
       {/* Main Content */}
