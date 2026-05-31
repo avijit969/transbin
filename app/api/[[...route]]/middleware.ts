@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_dev_key';
 
 export type JwtPayload = {
   id: string;
-  role: 'admin' | 'user';
+  role: 'superadmin' | 'admin' | 'user';
   email: string;
 };
 
@@ -29,13 +29,24 @@ export const authMiddleware = createMiddleware<{
   }
 });
 
-// Middleware to ensure user is an admin
+// Middleware to ensure user is an admin or superadmin
 export const adminMiddleware = createMiddleware<{
   Variables: { user: JwtPayload };
 }>(async (c, next) => {
   const user = c.get('user');
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'admin' && user.role !== 'superadmin')) {
     return c.json({ error: 'Forbidden: Admin access required' }, 403);
+  }
+  await next();
+});
+
+// Middleware to ensure user is a superadmin
+export const superAdminMiddleware = createMiddleware<{
+  Variables: { user: JwtPayload };
+}>(async (c, next) => {
+  const user = c.get('user');
+  if (!user || user.role !== 'superadmin') {
+    return c.json({ error: 'Forbidden: Superadmin access required' }, 403);
   }
   await next();
 });

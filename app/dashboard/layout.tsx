@@ -24,8 +24,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setUser(data.userData);
         
         // Basic role check routing
-        if (pathname.includes('/admin') && data.userData.role !== 'admin') {
-          router.push('/dashboard/user');
+        if (pathname.startsWith('/dashboard/superadmin') && data.userData.role !== 'superadmin') {
+          router.push(data.userData.role === 'admin' ? '/dashboard/admin' : '/dashboard/user');
+        } else if (pathname.startsWith('/dashboard/admin') && data.userData.role !== 'admin') {
+          router.push(data.userData.role === 'superadmin' ? '/dashboard/superadmin' : '/dashboard/user');
+        } else if (pathname.startsWith('/dashboard/user') && data.userData.role !== 'user') {
+          router.push(data.userData.role === 'superadmin' ? '/dashboard/superadmin' : '/dashboard/admin');
         }
       } catch (error) {
         router.push("/login");
@@ -77,7 +81,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         <nav className="flex-1 px-4 py-6 space-y-2">
-          {user?.role === 'admin' ? (
+          {user?.role === 'superadmin' ? (
+            <>
+              <Link href="/dashboard/superadmin" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+                <LayoutDashboard size={20} /> Overview
+              </Link>
+              <Link href="/dashboard/superadmin/users" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin/users' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+                <Users size={20} /> Manage Users
+              </Link>
+              <Link href="/dashboard/superadmin/profile" onClick={() => setIsMobileOpen(false)} className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/superadmin/profile' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
+                <UserCircle size={20} /> Profile
+              </Link>
+            </>
+          ) : user?.role === 'admin' ? (
             <>
               <Link href="/dashboard/admin" className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors ${pathname === '/dashboard/admin' ? 'bg-[#25D366]/10 text-[#16A34A]' : 'text-gray-600 hover:bg-gray-50'}`}>
                 <LayoutDashboard size={20} /> Overview

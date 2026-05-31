@@ -22,7 +22,10 @@ export const adminRoute = new Hono()
   
   // Get all users
   .get('/users', async (c) => {
-    const allUsers = db.select({ id: users.id, name: users.name, email: users.email, role: users.role }).from(users).all();
+    const allUsers = db.select({ id: users.id, name: users.name, email: users.email, role: users.role })
+                       .from(users)
+                       .where(eq(users.role, 'user'))
+                       .all();
     return c.json({ users: allUsers });
   })
   
@@ -35,7 +38,7 @@ export const adminRoute = new Hono()
         name: z.string().min(2),
         email: z.string().email(),
         password: z.string().min(6),
-        role: z.enum(['admin', 'user']).default('user'),
+        role: z.enum(['user']).default('user'),
       })
     ),
     async (c) => {
@@ -122,7 +125,7 @@ export const adminRoute = new Hono()
 
   // Get all invoices
   .get('/invoices/all', async (c) => {
-    // Join invoices with users to get user email/name
+    // Join invoices with users to get user email/name and filter by 'user' role
     const allInvoices = db
       .select({
         id: invoices.id,
@@ -137,6 +140,7 @@ export const adminRoute = new Hono()
       })
       .from(invoices)
       .innerJoin(users, eq(invoices.userId, users.id))
+      .where(eq(users.role, 'user'))
       .orderBy(desc(invoices.createdAt))
       .all();
       
@@ -145,8 +149,15 @@ export const adminRoute = new Hono()
 
   // Get basic analytics
   .get('/analytics', async (c) => {
-    const totalUsers = db.select({ id: users.id }).from(users).all().length;
-    const totalInvoices = db.select({ id: invoices.id }).from(invoices).all().length;
+    const totalUsers = db.select({ id: users.id }).from(users).where(eq(users.role, 'user')).all().length;
+    
+    // Total invoices for 'user' role only
+    const invoicesForUsers = db.select({ id: invoices.id })
+                               .from(invoices)
+                               .innerJoin(users, eq(invoices.userId, users.id))
+                               .where(eq(users.role, 'user'))
+                               .all();
+    const totalInvoices = invoicesForUsers.length;
     
     return c.json({ totalUsers, totalInvoices });
   });

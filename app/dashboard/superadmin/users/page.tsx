@@ -39,7 +39,7 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await fetch("/api/superadmin/users");
       const data = await res.json();
       if (res.ok) setUsersList(data.users || []);
     } catch (e) {}
@@ -73,7 +73,7 @@ export default function ManageUsers() {
     setUserMsg({ type: "", text: "" });
 
     try {
-      const res = await fetch("/api/admin/users", {
+      const res = await fetch("/api/superadmin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, role }),
@@ -101,8 +101,8 @@ export default function ManageUsers() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Manage Users</h1>
-        <p className="text-gray-600">View user accounts and manage access.</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 mb-2">Manage All Users</h1>
+        <p className="text-gray-600">View and manage superadmins, admins, and users.</p>
       </div>
 
       <div className="glass-panel p-6 md:p-8 rounded-3xl bg-white shadow-xl shadow-gray-100/50">
@@ -128,6 +128,8 @@ export default function ManageUsers() {
                 <SelectContent>
                   <SelectGroup>
                     <SelectItem value="all">All Roles</SelectItem>
+                    <SelectItem value="superadmin">Superadmin</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
                     <SelectItem value="user">User</SelectItem>
                   </SelectGroup>
                 </SelectContent>
@@ -183,6 +185,8 @@ export default function ManageUsers() {
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="superadmin">Superadmin</SelectItem>
                         </SelectGroup>
                       </SelectContent>
                     </Select>
@@ -224,7 +228,7 @@ export default function ManageUsers() {
                     </td>
                     <td className="py-4 px-4 text-gray-600">{u.email}</td>
                     <td className="py-4 px-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${u.role === 'superadmin' ? 'bg-red-100 text-red-700' : u.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
                         {u.role}
                       </span>
                     </td>

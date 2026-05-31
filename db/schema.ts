@@ -5,7 +5,7 @@ export const users = sqliteTable('users', {
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
-  role: text('role').notNull().default('user'), // 'admin' | 'user'
+  role: text('role').notNull().default('user'), // 'superadmin' | 'admin' | 'user'
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
 });
 
