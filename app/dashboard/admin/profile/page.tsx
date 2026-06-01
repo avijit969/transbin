@@ -1,25 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { User, Mail, Shield, CheckCircle2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AdminProfile() {
-  const [user, setUser] = useState<any>(null);
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) throw new Error("Failed to fetch user");
+      const data = await res.json();
+      return data.userData;
+    }
+  });
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.userData);
-        }
-      } catch (e) {}
-    };
-    fetchUser();
-  }, []);
-
-  if (!user) {
+  if (isLoading || !user) {
     return <div className="animate-pulse w-full h-64 bg-gray-200 rounded-3xl"></div>;
   }
 

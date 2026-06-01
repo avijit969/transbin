@@ -12,9 +12,7 @@ export function Footer() {
           {/* Company Info */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-6">
-              <div className="bg-[#25D366] p-2 rounded-full text-white">
-                <Leaf size={24} />
-              </div>
+              <img src="/logo/trashbin-logo.png" alt="TrashBin Logo" className="h-10 w-auto" />
               <span className="font-bold text-2xl text-gray-900 tracking-tight">
                 TrashBin
               </span>

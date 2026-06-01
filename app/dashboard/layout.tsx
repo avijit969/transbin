@@ -6,15 +6,15 @@ import Link from "next/link";
 import { Leaf, LogOut, LayoutDashboard, Users, FileText, UserCircle, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+import { useQuery, useMutation } from "@tanstack/react-query";
+
 // Sidebar content extracted for reuse in both desktop and mobile Sheet
 const SidebarContent = ({ user, pathname, handleLogout, setIsMobileOpen }: any) => {
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="p-6">
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="bg-[#25D366] p-2 rounded-full text-white">
-            <Leaf size={20} />
-          </div>
+          <img src="/logo/trashbin-logo.png" alt="TrashBin Logo" className="h-8 w-auto" />
           <span className="font-bold text-xl text-gray-900 tracking-tight">
             TrashBin
           </span>
@@ -83,44 +83,47 @@ const SidebarContent = ({ user, pathname, handleLogout, setIsMobileOpen }: any) 
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
+  const { data: user, isLoading, isError } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (!res.ok) throw new Error("Unauthorized");
+      const data = await res.json();
+      return data.userData;
+    },
+    retry: false
+  });
+
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (!res.ok) {
-          router.push("/login");
-          return;
-        }
-        const data = await res.json();
-        setUser(data.userData);
-        
-        // Basic role check routing
-        if (pathname.startsWith('/dashboard/superadmin') && data.userData.role !== 'superadmin') {
-          router.push(data.userData.role === 'admin' ? '/dashboard/admin' : '/dashboard/user');
-        } else if (pathname.startsWith('/dashboard/admin') && data.userData.role !== 'admin') {
-          router.push(data.userData.role === 'superadmin' ? '/dashboard/superadmin' : '/dashboard/user');
-        } else if (pathname.startsWith('/dashboard/user') && data.userData.role !== 'user') {
-          router.push(data.userData.role === 'superadmin' ? '/dashboard/superadmin' : '/dashboard/admin');
-        }
-      } catch (error) {
-        router.push("/login");
-      } finally {
-        setIsLoading(false);
+    if (isError) {
+      router.push("/login");
+    } else if (user) {
+      // Basic role check routing
+      if (pathname.startsWith('/dashboard/superadmin') && user.role !== 'superadmin') {
+        router.push(user.role === 'admin' ? '/dashboard/admin' : '/dashboard/user');
+      } else if (pathname.startsWith('/dashboard/admin') && user.role !== 'admin') {
+        router.push(user.role === 'superadmin' ? '/dashboard/superadmin' : '/dashboard/user');
+      } else if (pathname.startsWith('/dashboard/user') && user.role !== 'user') {
+        router.push(user.role === 'superadmin' ? '/dashboard/superadmin' : '/dashboard/admin');
       }
-    };
+    }
+  }, [user, isError, pathname, router]);
 
-    fetchUser();
-  }, [router, pathname]);
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/auth/logout", { method: "POST" });
+    },
+    onSuccess: () => {
+      router.push("/login");
+    }
+  });
 
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+  const handleLogout = () => {
+    logoutMutation.mutate();
   };
 
   if (isLoading) {
@@ -132,9 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-gray-100 p-4 flex items-center justify-between z-20 sticky top-0">
         <Link href="/" className="flex items-center gap-2">
-          <div className="bg-[#25D366] p-1.5 rounded-full text-white">
-            <Leaf size={16} />
-          </div>
+          <img src="/logo/trashbin-logo.png" alt="TrashBin Logo" className="h-6 w-auto" />
           <span className="font-bold text-lg text-gray-900 tracking-tight">
             TrashBin
           </span>

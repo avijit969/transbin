@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { FileText, Download, ExternalLink, Calendar, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -14,28 +15,22 @@ import {
 const ITEMS_PER_PAGE = 6;
 
 export default function UserDashboard() {
-  const [invoices, setInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    const fetchInvoices = async () => {
-      try {
-        const res = await fetch("/api/user/invoices");
-        const data = await res.json();
-        if (res.ok) setInvoices(data.invoices || []);
-      } catch (error) {
-        console.error("Failed to fetch invoices", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchInvoices();
-  }, []);
+  const { data: invoicesData, isLoading } = useQuery({
+    queryKey: ['user-invoices'],
+    queryFn: async () => {
+      const res = await fetch("/api/user/invoices");
+      const data = await res.json();
+      if (!res.ok) throw new Error("Failed to fetch invoices");
+      return data;
+    }
+  });
+
+  const invoices = invoicesData?.invoices || [];
 
   // Filter & Paginate Logic
   const filteredInvoices = useMemo(() => {

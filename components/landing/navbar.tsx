@@ -38,9 +38,7 @@ export function Navbar() {
         }`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="bg-[#25D366] p-2 rounded-full text-white group-hover:scale-110 transition-transform">
-              <Leaf size={20} />
-            </div>
+            <img src="/logo/trashbin-logo.png" alt="TrashBin Logo" className="h-10 w-auto group-hover:scale-105 transition-transform" />
             <span className="font-bold text-xl text-gray-900 tracking-tight">
               TrashBin <span className="text-[#25D366] font-medium text-sm hidden sm:inline-block">Pvt. Ltd.</span>
             </span>

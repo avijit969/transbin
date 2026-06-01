@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { UploadCloud, CheckCircle2, FileText, ExternalLink, Calendar, Search, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -22,9 +23,8 @@ import {
 const ITEMS_PER_PAGE = 8;
 
 export default function ManageInvoices() {
-  const [usersList, setUsersList] = useState([]);
-  const [invoices, setInvoices] = useState([]);
-  
+  const queryClient = useQueryClient();
+
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -35,37 +35,34 @@ export default function ManageInvoices() {
   const [selectedUser, setSelectedUser] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploadMsg, setUploadMsg] = useState({ type: "", text: "" });
-  const [isUploading, setIsUploading] = useState(false);
 
-  const fetchData = async () => {
-    try {
-      const [usersRes, invoicesRes] = await Promise.all([
-        fetch("/api/admin/users"),
-        fetch("/api/admin/invoices/all")
-      ]);
-      if (usersRes.ok) {
-        const data = await usersRes.json();
-        setUsersList(data.users || []);
-      }
-      if (invoicesRes.ok) {
-        const data = await invoicesRes.json();
-        setInvoices(data.invoices || []);
-      }
-    } catch (e) {}
-  };
+  const { data: usersData } = useQuery({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/users");
+      return res.json();
+    }
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: invoicesData } = useQuery({
+    queryKey: ['admin-invoices-all'],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/invoices/all");
+      return res.json();
+    }
+  });
+
+  const usersList = usersData?.users || [];
+  const invoices = invoicesData?.invoices || [];
 
   // Filter & Paginate Logic
   const filteredInvoices = useMemo(() => {
-    return invoices.filter((inv: any) => {
+    return invoices?.filter((inv: any) => {
       const targetName = inv.user?.name || "";
       const targetEmail = inv.user?.email || "";
-      const matchesSearch = targetName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            targetEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            inv.id.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesSearch = targetName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        targetEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        inv.id.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesType = typeFilter === "all" || inv.fileType === typeFilter;
       return matchesSearch && matchesType;
     });
@@ -78,47 +75,47 @@ export default function ManageInvoices() {
     setCurrentPage(1);
   }, [searchQuery, typeFilter]);
 
-  const handleUploadInvoice = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !selectedUser) {
-      setUploadMsg({ type: "error", text: "Please select a user and a file." });
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadMsg({ type: "", text: "" });
-
-    const formData = new FormData();
-    formData.append("userId", selectedUser);
-    formData.append("file", file);
-
-    try {
+  const uploadMutation = useMutation({
+    mutationFn: async (formData: FormData) => {
       const res = await fetch("/api/admin/invoices", {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Upload failed");
-
+      return data;
+    },
+    onSuccess: () => {
       setUploadMsg({ type: "success", text: "Invoice uploaded successfully!" });
-      setFile(null); 
+      setFile(null);
       setSelectedUser("");
-      
+
       const fileInput = document.getElementById('invoice-file') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
 
-      fetchData(); // Refresh list
+      queryClient.invalidateQueries({ queryKey: ['admin-invoices-all'] });
 
       setTimeout(() => {
         setIsDialogOpen(false);
         setUploadMsg({ type: "", text: "" });
       }, 1500);
-    } catch (error: any) {
+    },
+    onError: (error: any) => {
       setUploadMsg({ type: "error", text: error.message });
-    } finally {
-      setIsUploading(false);
     }
+  });
+
+  const handleUploadInvoice = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file || !selectedUser) {
+      setUploadMsg({ type: "error", text: "Please select a user and a file." });
+      return;
+    }
+    setUploadMsg({ type: "", text: "" });
+    const formData = new FormData();
+    formData.append("userId", selectedUser);
+    formData.append("file", file);
+    uploadMutation.mutate(formData);
   };
 
   return (
@@ -129,15 +126,15 @@ export default function ManageInvoices() {
       </div>
 
       <div className="glass-panel p-6 md:p-8 rounded-3xl bg-white shadow-xl shadow-gray-100/50 min-h-[500px]">
-        
+
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
           <div className="flex w-full md:w-auto flex-1 gap-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input 
-                type="text" 
-                placeholder="Search user or ID..." 
+              <input
+                type="text"
+                placeholder="Search user or ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#25D366]/20 focus:border-[#25D366] outline-none text-sm"
@@ -223,8 +220,8 @@ export default function ManageInvoices() {
                     </div>
                   </div>
 
-                  <button type="submit" disabled={isUploading} className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-3 text-sm font-bold text-white hover:bg-[#1FAF57] shadow-lg shadow-[#25D366]/20 transition-all disabled:opacity-70">
-                    {isUploading ? "Uploading..." : "Upload & Assign"}
+                  <button type="submit" disabled={uploadMutation.isPending} className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-6 py-3 text-sm font-bold text-white hover:bg-[#1FAF57] shadow-lg shadow-[#25D366]/20 transition-all disabled:opacity-70">
+                    {uploadMutation.isPending ? "Uploading..." : "Upload & Assign"}
                   </button>
                 </form>
               </div>
@@ -274,14 +271,14 @@ export default function ManageInvoices() {
               Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredInvoices.length)} of {filteredInvoices.length} entries
             </span>
             <div className="flex gap-2">
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"
               >
                 <ChevronLeft size={18} />
               </button>
-              <button 
+              <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
                 className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:hover:bg-transparent transition-colors"

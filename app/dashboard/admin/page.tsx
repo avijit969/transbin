@@ -1,40 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Users, FileText, UploadCloud, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 
 export default function AdminOverview() {
-  const [stats, setStats] = useState({ totalUsers: 0, totalInvoices: 0 });
-  const [recentInvoices, setRecentInvoices] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: statsData, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/analytics");
+      if (!res.ok) throw new Error("Failed to fetch stats");
+      return res.json();
+    }
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [statsRes, invoicesRes] = await Promise.all([
-          fetch("/api/admin/analytics"),
-          fetch("/api/admin/invoices/all")
-        ]);
+  const { data: invoicesData, isLoading: isLoadingInvoices } = useQuery({
+    queryKey: ['admin-invoices-all'],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/invoices/all");
+      if (!res.ok) throw new Error("Failed to fetch invoices");
+      return res.json();
+    }
+  });
 
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData);
-        }
-
-        if (invoicesRes.ok) {
-          const invoicesData = await invoicesRes.json();
-          // Just grab the latest 5 for the overview
-          setRecentInvoices(invoicesData.invoices.slice(0, 5));
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const stats = statsData || { totalUsers: 0, totalInvoices: 0 };
+  const recentInvoices = invoicesData?.invoices?.slice(0, 5) || [];
+  const isLoading = isLoadingStats || isLoadingInvoices;
 
   if (isLoading) {
     return <div className="animate-pulse flex gap-4"><div className="w-full h-32 bg-gray-200 rounded-2xl"></div><div className="w-full h-32 bg-gray-200 rounded-2xl"></div></div>;

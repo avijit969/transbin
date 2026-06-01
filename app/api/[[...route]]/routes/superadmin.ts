@@ -53,6 +53,65 @@ export const superAdminRoute = new Hono()
     }
   )
 
+  // Edit any user
+  .patch(
+    '/users/:id',
+    zValidator(
+      'json',
+      z.object({
+        name: z.string().min(2).optional(),
+        email: z.string().email().optional(),
+        password: z.string().min(6).optional().or(z.literal('')),
+        role: z.enum(['superadmin', 'admin', 'user']).optional(),
+      })
+    ),
+    async (c) => {
+      const id = c.req.param('id');
+      const { name, email, password, role } = c.req.valid('json');
+
+      const targetUser = db.select().from(users).where(eq(users.id, id)).get();
+      if (!targetUser) return c.json({ error: 'User not found' }, 404);
+
+      const payload = c.get('user');
+      if (id === payload.id && role && role !== targetUser.role) {
+        return c.json({ error: 'Cannot change your own role' }, 403);
+      }
+
+      const updates: any = {};
+      if (name) updates.name = name;
+      if (email) updates.email = email;
+      if (role) updates.role = role;
+      if (password && password.length > 0) {
+        updates.passwordHash = await bcrypt.hash(password, 10);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        db.update(users).set(updates).where(eq(users.id, id)).run();
+      }
+
+      return c.json({ message: 'User updated successfully' });
+    }
+  )
+
+  // Delete any user
+  .delete('/users/:id', async (c) => {
+    const id = c.req.param('id');
+    
+    const targetUser = db.select().from(users).where(eq(users.id, id)).get();
+    if (!targetUser) return c.json({ error: 'User not found' }, 404);
+
+    const payload = c.get('user');
+    if (id === payload.id) {
+      return c.json({ error: 'Cannot delete yourself' }, 403);
+    }
+
+    // Cascade delete invoices
+    db.delete(invoices).where(eq(invoices.userId, id)).run();
+    db.delete(users).where(eq(users.id, id)).run();
+
+    return c.json({ message: 'User deleted successfully' });
+  })
+
   // Get all invoices (no role restriction for superadmin)
   .get('/invoices/all', async (c) => {
     const allInvoices = db

@@ -60,12 +60,58 @@ export const adminRoute = new Hono()
         role,
         createdAt: new Date(),
       }).run();
-
       return c.json({ message: 'User created successfully', id: newUserId });
     }
   )
 
-  // Upload invoice
+  // Edit a user
+  .patch(
+    '/users/:id',
+    zValidator(
+      'json',
+      z.object({
+        name: z.string().min(2).optional(),
+        email: z.string().email().optional(),
+        password: z.string().min(6).optional().or(z.literal('')),
+      })
+    ),
+    async (c) => {
+      const id = c.req.param('id');
+      const { name, email, password } = c.req.valid('json');
+
+      const targetUser = db.select().from(users).where(eq(users.id, id)).get();
+      if (!targetUser) return c.json({ error: 'User not found' }, 404);
+      if (targetUser.role !== 'user') return c.json({ error: 'Forbidden' }, 403);
+
+      const updates: any = {};
+      if (name) updates.name = name;
+      if (email) updates.email = email;
+      if (password && password.length > 0) {
+        updates.passwordHash = await bcrypt.hash(password, 10);
+      }
+
+      if (Object.keys(updates).length > 0) {
+        db.update(users).set(updates).where(eq(users.id, id)).run();
+      }
+
+      return c.json({ message: 'User updated successfully' });
+    }
+  )
+
+  // Delete a user
+  .delete('/users/:id', async (c) => {
+    const id = c.req.param('id');
+    
+    const targetUser = db.select().from(users).where(eq(users.id, id)).get();
+    if (!targetUser) return c.json({ error: 'User not found' }, 404);
+    if (targetUser.role !== 'user') return c.json({ error: 'Forbidden' }, 403);
+
+    // Cascade delete invoices first
+    db.delete(invoices).where(eq(invoices.userId, id)).run();
+    db.delete(users).where(eq(users.id, id)).run();
+
+    return c.json({ message: 'User deleted successfully' });
+  })
   .post('/invoices', async (c) => {
     try {
       const body = await c.req.parseBody();

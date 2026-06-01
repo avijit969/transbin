@@ -5,43 +5,45 @@ import { useRouter } from "next/navigation";
 import { Leaf, Lock, Mail, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useMutation } from "@tanstack/react-query";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
-
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: any) => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(credentials),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || "Login failed");
       }
-
-      // Redirect based on role
+      return data;
+    },
+    onSuccess: (data) => {
       if (data.user.role === "admin") {
         router.push("/dashboard/admin");
+      } else if (data.user.role === "superadmin") {
+        router.push("/dashboard/superadmin");
       } else {
         router.push("/dashboard/user");
       }
-    } catch (err: any) {
+    },
+    onError: (err: any) => {
       setError(err.message);
-    } finally {
-      setIsLoading(false);
     }
+  });
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -51,9 +53,7 @@ export default function LoginPage() {
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-[#86EFAC]/20 rounded-full blur-[80px] translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
       <Link href="/" className="flex items-center gap-2 mb-8 z-10 group">
-        <div className="bg-[#25D366] p-2 rounded-full text-white group-hover:scale-110 transition-transform">
-          <Leaf size={24} />
-        </div>
+        <img src="/logo/trashbin-logo.png" alt="TrashBin Logo" className="h-12 w-auto group-hover:scale-105 transition-transform" />
         <span className="font-bold text-2xl text-gray-900 tracking-tight">
           TrashBin
         </span>
@@ -108,11 +108,11 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={loginMutation.isPending}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-8 py-4 text-base font-bold text-white shadow-lg shadow-[#25D366]/30 hover:bg-[#1FAF57] hover:shadow-xl transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
-            {!isLoading && <ArrowRight size={18} />}
+            {loginMutation.isPending ? "Signing in..." : "Sign In"}
+            {!loginMutation.isPending && <ArrowRight size={18} />}
           </button>
         </form>
       </motion.div>
