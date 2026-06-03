@@ -28,14 +28,12 @@ export function Navbar() {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "py-3" : "py-5"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? "py-3" : "py-5"
+        }`}
     >
       <div className="container mx-auto px-4 md:px-6">
-        <div className={`flex items-center justify-between rounded-full px-6 py-3 transition-all duration-300 ${
-          isScrolled ? "glass-panel" : "bg-transparent"
-        }`}>
+        <div className={`flex items-center justify-between rounded-full px-6 py-3 transition-all duration-300 ${isScrolled ? "glass-panel" : "bg-transparent"
+          }`}>
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <img src="/logo/trashbin-logo.png" alt="TrashBin Logo" className="h-10 w-auto group-hover:scale-105 transition-transform" />
@@ -71,7 +69,7 @@ export function Navbar() {
             >
               Get Waste Pickup
             </Link>
-            
+
             <button
               className="md:hidden text-gray-700 hover:text-[#25D366] transition-colors"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -91,7 +89,7 @@ export function Navbar() {
             exit={{ opacity: 0, y: -20 }}
             className="absolute top-full left-0 right-0 mt-2 px-4 md:hidden"
           >
-            <div className="glass-panel rounded-3xl p-6 flex flex-col gap-4 shadow-xl">
+            <div className="bg-neutral-50 rounded-3xl p-6 flex flex-col gap-4 shadow-xl">
               {links.map((link) => (
                 <Link
                   key={link.name}

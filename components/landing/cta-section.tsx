@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Mail, Phone, Leaf } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function CtaSection() {
   return (
@@ -15,10 +16,17 @@ export function CtaSection() {
           transition={{ duration: 0.7 }}
           className="relative rounded-[3rem] overflow-hidden bg-[#111827] flex flex-col md:flex-row items-center justify-between p-8 md:p-16 lg:p-20 shadow-2xl"
         >
-          {/* Background Gradients */}
+          {/* Background Image and Gradients */}
           <div className="absolute top-0 left-0 w-full h-full">
+            <Image
+              src="/images/cta_bg.png"
+              alt="Green abstract background"
+              fill
+              className="object-cover opacity-60 mix-blend-overlay pointer-events-none"
+            />
             <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#25D366]/30 to-transparent rounded-full blur-[100px] -translate-y-1/2 translate-x-1/3" />
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#16A34A]/20 to-transparent rounded-full blur-[80px] translate-y-1/3 -translate-x-1/4" />
+            <div className="absolute inset-0 bg-black/40 pointer-events-none" />
           </div>
 
           <div className="relative z-10 max-w-2xl mb-10 md:mb-0 text-center md:text-left">

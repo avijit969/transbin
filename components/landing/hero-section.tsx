@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, PhoneCall, Recycle, Users, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export function HeroSection() {
   return (
@@ -64,8 +65,15 @@ export function HeroSection() {
             className="relative h-full min-h-[400px] lg:min-h-[500px] flex items-center justify-center"
           >
             {/* Main Center Piece (Abstract representation) */}
-            <div className="relative w-72 h-72 md:w-96 md:h-96 rounded-full bg-gradient-to-tr from-[#DCFCE7] to-[#86EFAC] flex items-center justify-center shadow-2xl shadow-[#25D366]/20 animate-pulse-slow">
-              <Recycle size={120} className="text-[#1FAF57] opacity-80" />
+            <div className="relative w-80 h-80 md:w-[28rem] md:h-[28rem] rounded-full overflow-hidden flex items-center justify-center shadow-2xl shadow-[#25D366]/40 border-8 border-white group">
+              <div className="absolute inset-0 bg-[#25D366]/20 group-hover:bg-transparent transition-colors duration-500 z-10" />
+              <Image 
+                src="/images/hero_landing.png"
+                alt="Sustainable Smart City"
+                fill
+                priority
+                className="object-cover group-hover:scale-110 transition-transform duration-700"
+              />
             </div>
 
             {/* Floating Stat Card 1 */}
