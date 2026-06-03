@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Leaf, LogOut, LayoutDashboard, Users, FileText, UserCircle, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // Sidebar content extracted for reuse in both desktop and mobile Sheet
 const SidebarContent = ({ user, pathname, handleLogout, setIsMobileOpen }: any) => {
@@ -86,6 +86,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
 
   const { data: user, isLoading, isError } = useQuery({
     queryKey: ['me'],
@@ -118,6 +119,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       await fetch("/api/auth/logout", { method: "POST" });
     },
     onSuccess: () => {
+      queryClient.clear();
       router.push("/login");
     }
   });

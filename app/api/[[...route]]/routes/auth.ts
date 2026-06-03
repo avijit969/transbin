@@ -55,7 +55,11 @@ export const authRoute = new Hono()
     }
   )
   .post('/logout', (c) => {
-    deleteCookie(c, 'auth_token', { path: '/' });
+    deleteCookie(c, 'auth_token', { 
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Strict'
+    });
     return c.json({ message: 'Logged out successfully' });
   })
   .get('/me', authMiddleware, (c) => {
